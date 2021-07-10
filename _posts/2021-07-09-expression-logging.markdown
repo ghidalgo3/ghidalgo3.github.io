@@ -7,7 +7,7 @@ categories: c#
 # Problem
 We recently had a problem at work where a piece of code was throwing an exception with the message "System variable should be X but is Y". The problem was that we had no idea _which_ value was incorrectly set, and we were so deep into highly reusable generic code that pushing the value name via method parameter would have required touching dozens of call sites.
 
-To concretize this, we have something like this (types have been altered for their safety :)):
+To concretize this, we have something like this (types have been altered for their safety):
 
 ```csharp
 // This class is auto-generated from an RPC specification.
@@ -67,7 +67,7 @@ I spend the next day reading through the documentation and here's what I came up
 Here is our starting point: 
 ```csharp
 var client = new RemoteSystemClient();
-await RemoteSystemClientExtension.PollUntilExpectedAsync(client.GetValue1, 2);
+await RemoteSystemClientExtension.PollUntilExpectedAsync(() => client.GetValue1(), 2);
 ```
 When run, this throws an exception like this:
 ```
@@ -82,7 +82,8 @@ No mention whatsoever about Value1! Let's see how we can improve `PollUntilExpec
 1. Copy the original method and change the first argument from `Func<Task<T>>>` to `Expression<Func<Task<T>>>`. I simply wrapped the original argument type (which must be a [delegate] type ) in an `Expression`. This will be our new public method.
 1. I make the original method private and add one more argument called `accessorName`. This will be the name of the method that I want to include in the exception message.
 1. Then I write the C# expression code.
-```
+
+```csharp
 private static async Task PollUntilExpectedAsyncImpl<T>(
     Func<Task<T>> getter,
     T expectedValue,
@@ -112,11 +113,85 @@ Unhandled exception. expressions.ValueDidNotSetException: Expected: 2, Actual 1.
 
 Notice how the name of the accessor method is included in the exception message, making it really easy to track down which configuration is not being set in time.
 
-# Is this any good?
-You might spot that this `Expression` stuff is a lot like using reflection.
 ## Performance
-## Readability
+You might spot that this `Expression` stuff is a lot like using reflection.
+Reflection is _slow_ so before I check this in I should profile how much slower this is than the original solution.
+For this I will use [BenchmarkDotNet] to measure the difference.
+
+```csharp
+public class BenchmarkExpressions
+{
+    private static readonly RemoteSystemClient client = new RemoteSystemClient();
+
+    [Benchmark]
+    public void Expression() => RemoteSystemClientExtension.PollUntilExpectedAsync(() => client.GetValue1(), 1).Wait();
+
+    [Benchmark]
+    public void NoExpression() => RemoteSystemClientExtension.PollUntilExpectedAsyncImpl(client.GetValue1, 1, "GetValue1").Wait();
+}
+```
+
+Results:
+
+```
+/ * Summary *
+
+BenchmarkDotNet=v0.13.0, OS=macOS Big Sur 11.4 (20F71) [Darwin 20.5.0]
+Intel Core i7-9750H CPU 2.60GHz, 1 CPU, 12 logical and 6 physical cores
+.NET SDK=5.0.101
+  [Host]     : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
+  DefaultJob : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
+
+
+|       Method |          Mean |      Error |     StdDev |
+|------------- |--------------:|-----------:|-----------:|
+|   Expression | 116,593.03 ns | 987.113 ns | 824.284 ns |
+| NoExpression |      51.01 ns |   0.370 ns |   0.328 ns |
+```
+
+😬 Yikes! That is actually almost 2000x *slower*. Can we do better? The only potentially expensive operation in our code is the `Compile` call, what if we cached the compilation results?
+
+```csharp
+private static Dictionary<string, Func<Task<int>>> cache = new();
+        public static async Task PollUntilExpectedAsyncCached(Expression<Func<Task<int>>> getter, int expectedValue)
+        {
+            Func<Task<int>> method = null;
+            string name = (getter.Body as MethodCallExpression).Method.Name;
+            if (cache.ContainsKey(name))
+            {
+                // Console.WriteLine("Cache hit");
+                method = cache[name];
+            }
+            else
+            {
+                // Console.WriteLine("Cache miss");
+                method = getter.Compile();
+                cache[name] = method;
+            }
+            await PollUntilExpectedAsyncImpl(method, expectedValue, name);
+        }
+```
+Result:
+```
+// * Summary *
+
+BenchmarkDotNet=v0.13.0, OS=macOS Big Sur 11.4 (20F71) [Darwin 20.5.0]
+Intel Core i7-9750H CPU 2.60GHz, 1 CPU, 12 logical and 6 physical cores
+.NET SDK=5.0.101
+  [Host]     : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
+  DefaultJob : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
+
+
+|           Method |          Mean |        Error |       StdDev |
+|----------------- |--------------:|-------------:|-------------:|
+|       Expression | 118,563.55 ns | 2,280.210 ns | 2,964.917 ns |
+| ExpressionCached |     556.61 ns |    11.099 ns |    15.192 ns |
+|     NoExpression |      50.79 ns |     0.878 ns |     0.685 ns |
+```
+Nice! Only 10x slower! This is an acceptable performance difference in my book.
 
 # Conclusion
+Should you use expression trees to pass down logging state? Probably not, but if you ever need to remember to cache your `Compile` calls so that you don't pay a huge performance cost.
 
 [delegate]: https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/delegates/
+[BenchmarkDotNet]: https://benchmarkdotnet.org/
