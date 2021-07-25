@@ -157,6 +157,11 @@ Put this into a file called `json2csv.jq` and invoke it like this:
 jq -rf json2csv.jq yelp_academic_dataset_business.json
 ```
 
+Don't forget to turn the json file into an array of objects first with something like:
+```
+> head -n 3 yelp_academic_dataset_business.json | jq -s '.' > high_ratings.json
+```
+
 Big thanks to [this](https://stackoverflow.com/questions/32960857/how-to-convert-arbitrary-simple-json-to-csv-using-jq) and [this](https://stackoverflow.com/questions/57242240/jq-object-cannot-be-csv-formatted-only-array) StackOverflow question.
 
 # Conclusion
