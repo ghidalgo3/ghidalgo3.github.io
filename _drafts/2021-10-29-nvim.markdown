@@ -1,0 +1,109 @@
+---
+layout: post
+title:  "Fun with NeoVim 0.5"
+date:   2021-10-29 12:34:23 -0400
+categories: vim
+---
+a change
+
+# Introduction
+I kept seeing posts on HackerNews about NeoVim so I decided to try it out and see what it can offer that vim cannot.
+For context, I used vim in college for almost all my classes but I haven't used vim proper much at work aside from plugins and bindings for Visual Studio and Visual Studio Code.
+My hypothesis is that that NeoVim addresses all of the old nonsense legacy crap defaults that vim maintains because of "backwards compatibility".
+With fresh eyes, the 21st century should likely deliver better text editor defaults and designs than the 20th.
+
+# Vanilla NeoVim 
+Starting NeoVim (with `nvim`) presents you with an interface that strongly resembles vim.
+You can type `:help nvim` to bring up the same vim tutor experience you probably experienced years ago.
+There is an interesting `:checkhealth` command where you can ask NeoVim to examine the current system and present recommendations to improve your user experience.
+I think `:checkhealth` is a great tool to diagnose a degraded NeoVim experience instead of hitting you with a wall of errors; more programs should adopt this UX pattern.
+It is in the health check that I found that neovim did _not_ load my existing user configuration file, `~/.vimrc`.
+I think it's worthwhile to talk about why.
+
+## What happened to ~/.vimrc?
+Many programs historically read "hidden" user configuration files from the `~` directory.
+For example, I have a `~/.vimrc` file that vim reads on startup to configure keybinds and plugins.
+Not all programs use the `~` + hidden file convention which has caused me some consternation in the past trying to synchronize so-called "dotfiles" across machines.
+The NeoVim developers thankfully adopted the Cross-Desktop Group (XDG) base directory specification for user configuation files, which means that NeoVim configuration files are search for in `~/.config/nvim` (technically nvim searches environment variable `XDG_CONFIG_HOME` but the spec says that if `XDG_CONFIG_HOME` is not set, applications should default to `~/.config`) on macOS and somewhere under `%APPDATA%` on Windows.
+The quick and dirty solution if you want to just make `nvim` behave like `vim` is to create a symlink from `~/.config/nvim/init.vim` to `~/.vimrc`.
+The nvim migration guide asks that you create this file and fill it with commands to source the existing `.vimrc`, I don't have a strong opinion either way.
+I wanted to write an `init.vim` from scratch, so I chose not to do this.
+
+All of the built-in vim commands in your existing `.vimrc` will work in NeoVim.
+Many of your `.vimrc` lines may now be redundant because NeoVim ships with a lot of default settings _on_.
+For a full list of default enabled options, check `:help nvim-defaults`.
+You may find your `init.vim` getting very short; sane defaults are a big win in my book.
+Some notable settings from my `init.vim`:
+
+```
+set relativenumber
+set number
+let mapleader="\<Space>"
+inoremap jk <Esc>
+nnoremap <Leader>ev :vsplit ~/.config/nvim/init.vim<cr>
+nnoremap <Leader>sv :source ~/.config/nvim/init.vim<cr>
+nnoremap <Leader>q :q<cr>
+nnoremap <Leader>w :w<cr>
+nnoremap <Leader>f :noh<cr>
+nnoremap <Leader>h <C-w>h
+nnoremap <Leader>l <C-w>l
+nnoremap <Leader>j <C-w>j
+nnoremap <Leader>k <C-w>k
+```
+
+
+# Plugins 
+Vim plugins were all originally vimscript programs that interacted with the editor state to provide new functionality.
+A plugin could be as little as a `plugin.vim` sourced in `.vimrc` which set up key mapping, new functions, event hooks, etc...
+Historically vim had several different plugin package managers, none of which were officially supported and none of them had enough mindshare to be declared a de facto winner.
+Worse, each package manager had their own specification for package structures so plugin maintainers had to do redundant work to make their plugin work for all users.
+After years of watching users deal with several ways of doing the same thing, in 2019 vim finally added an official package management specification, you can read about it with `:help packages`.
+Note that this is just a specification, vim still relies on the user deciding on a package download & update system.
+Usually git repositories are sufficient.
+
+NeoVim uses the same package specification as vim, but instead uses `XDG_DATA_HOME` as the package storage location.
+Again, NeoVim does _not_ prescribe how to download and update packages and relies on the user to make this decision.
+You can either:
+1. Do it by hand by placing unpacked packages in the right directory
+1. `git clone` a ready-to-go plugin repository into the right directory
+1. Rely on a package manager like `packer.nvim` or `vim-plug`
+
+I chose to use `vim-plug` because it has more stars on github, is older than `packer`, and seems more mature.
+Packages are declared in `init.vim` (apparently they are merely names of public GitHub repositories), installed with `:PlugInstall`, updated with `:PlugUpdate`, and removed simply by removing them from your `init.vim` (optionally run `:PlugClean` to remove unused plugins from the filesystem).
+
+## Compatibility
+Since NeoVim supports vimscript, almost all vim packages are compatible with NeoVim.
+This is great for users migrating from vim to NeoVim that need their existing plugins to continue working.
+Vimscript is, let's be honest, a terrible scripting language on par with `[ba]sh` in the number of foot guns you must be careful of.
+NeoVim supports vimscript for backwards compatibility but also offers a Lua scripting interface.
+
+## Generic useful plugins
+1. [nvim-telescope](https://github.com/nvim-telescope/telescope.nvim) to get that nice fuzzy finding
+1. [CHADTree](https://github.com/ms-jpq/chadtree) really good file navigation
+1. [vim-devicons](https://github.com/ryanoasis/vim-devicons) and [vim-devicons-emoji](https://github.com/adelarsq/vim-emoji-icon-theme) to get nice file icons in CHADTree
+
+# LSP
+The language server protocol is a specification developed by Microsoft to decouple features of an IDE (code-completion, navigation, compiler error highilighting, etc.) from the text editor the user wants to use.
+The goal of LSP is to allow an editor with an LSP _client_ to work for any programming language for which a language _server_ exists.
+NeoVim ships with a built-in LSP client (nice!), but I still need to find LSP servers for languages I care about.
+So let's take my current favorite language C# as an example, there is an LSP implementation by the OmniSharp project, easily installable through `vim-plug`.
+
+Once installed, does it just work out of the box to replace Visual Studio Code features? Well, not exactly.
+There are a lot of secondary features of Visual Studio Code and Visual Studio that I have grown used to and I really want to switch over from VSCode to NeoVim because I'm tired of the little UI delays in VSCode.
+I therefore need to tackle the challenge of becoming a productive C# developer that has gotten used to VSCode and VS.
+
+The OmniSharp folks do recommend a few more plugins, so I will also install them:
+1. [ALE: Asynchronous Linting Engine](https://github.com/dense-analysis/ale): This gets me linting in the editor. Very important to also configure ALE to _only_ use OmniSharp as the C# linter [like this](https://github.com/OmniSharp/omnisharp-vim#optional-install-ale).
+
+## Code Navigation
+I like to navigate back and forth between definition and usage, so putting my cursor on a type and entering `:OmniSharpGotoDefinition` works well enough. I can navigate forwards and backwards with `Ctrl-o` and 
+
+# Treesitter
+
+
+# Debugging
+
+# Conclusion
+
+# References
+[vim-plug package explanation](https://github.com/junegunn/vim-plug/wiki/tutorial)
