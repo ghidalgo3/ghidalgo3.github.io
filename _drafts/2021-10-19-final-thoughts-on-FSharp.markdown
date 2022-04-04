@@ -19,6 +19,8 @@ In this post I will argue to myself:
 1. What are the tooling gaps for F#?
 1. Is F# is worth it? What does that even mean?
 
+This isn't a purely academic exercise, I did write a few thousand lines of F# for a personal project so I'd consider myself intermediately proficient writing F#.
+
 # What are the roadblocks to start using F#?
 The answer depends on whether you're using Visual Studio / .NET Framework or .NET Core.
 I will not consider Mono or other CLR implementations or IDEs, they are out-of-scope.
@@ -63,5 +65,15 @@ let person =
 	  Age = 25 }
 ```
 There is only a very small benefit to F# in this case.
+
+## 
+
+# Where does F# fall short of C#?
+
+# What _exactly_ is the interoperability story between F# and C#?
+
+# What are the tooling gaps for F#?
+
+# Is F# is worth it? What does that even mean?
 
 # Conclusion
