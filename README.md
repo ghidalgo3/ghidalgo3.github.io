@@ -4,5 +4,6 @@ GitHub Pages blog
 # Development
 Run the following and open https://localhost:4000
 ```
-jekyll serve --livereload --drafts
+bundle exec jekyll serve --livereload --drafts
 ```
+Or drop the `bundle exec` if it does not work, shitty Ruby.
