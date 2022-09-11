@@ -1,21 +1,21 @@
 ---
 layout: post
-title:  "Fun with NeoVim 0.5"
+title:  "Fun with NeoVim 0.7"
 date:   2021-10-29 12:34:23 -0400
 categories: vim
 ---
-a change
 
 # Introduction
 I kept seeing posts on HackerNews about NeoVim so I decided to try it out and see what it can offer that vim cannot.
-For context, I used vim in college for almost all my classes but I haven't used vim proper much at work aside from plugins and bindings for Visual Studio and Visual Studio Code.
-My hypothesis is that that NeoVim addresses all of the old nonsense legacy crap defaults that vim maintains because of "backwards compatibility".
+In college, I used vim for almost all my classes but I haven't used vim proper much at work aside from plugins and bindings for Visual Studio and Visual Studio Code.
+The general vibe I got is that that NeoVim addresses all of the old nonsense legacy crap defaults that vim maintains because of "backwards compatibility".
 With fresh eyes, the 21st century should likely deliver better text editor defaults and designs than the 20th.
 
 # Vanilla NeoVim 
 Starting NeoVim (with `nvim`) presents you with an interface that strongly resembles vim.
 You can type `:help nvim` to bring up the same vim tutor experience you probably experienced years ago.
 There is an interesting `:checkhealth` command where you can ask NeoVim to examine the current system and present recommendations to improve your user experience.
+Plugins can register their own custom health check integration, which should help users troubleshoot misconfigured plugins.
 I think `:checkhealth` is a great tool to diagnose a degraded NeoVim experience instead of hitting you with a wall of errors; more programs should adopt this UX pattern.
 It is in the health check that I found that neovim did _not_ load my existing user configuration file, `~/.vimrc`.
 I think it's worthwhile to talk about why.
@@ -23,7 +23,8 @@ I think it's worthwhile to talk about why.
 ## What happened to ~/.vimrc?
 Many programs historically read "hidden" user configuration files from the `~` directory.
 For example, I have a `~/.vimrc` file that vim reads on startup to configure keybinds and plugins.
-Not all programs use the `~` + hidden file convention which has caused me some consternation in the past trying to synchronize so-called "dotfiles" across machines.
+Not all programs use the `~` + hidden file convention, and that has created some trouble in the past trying to synchronize so-called "dotfiles" across machines.
+
 The NeoVim developers thankfully adopted the Cross-Desktop Group (XDG) base directory specification for user configuation files, which means that NeoVim configuration files are search for in `~/.config/nvim` (technically nvim searches environment variable `XDG_CONFIG_HOME` but the spec says that if `XDG_CONFIG_HOME` is not set, applications should default to `~/.config`) on macOS and somewhere under `%APPDATA%` on Windows.
 The quick and dirty solution if you want to just make `nvim` behave like `vim` is to create a symlink from `~/.config/nvim/init.vim` to `~/.vimrc`.
 The nvim migration guide asks that you create this file and fill it with commands to source the existing `.vimrc`, I don't have a strong opinion either way.
