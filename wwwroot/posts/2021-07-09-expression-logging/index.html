@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>Logging with Expressions | Gustavo&#39;s blog</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="description" content="Problem We recently had a problem at work where a piece of code was throwing an exception with the message &ldquo;System variable should be X but is Y&rdquo;. The problem was that we had no idea which value was incorrectly set, and we were so deep into highly reusable generic code that pushing the value name via method parameter would have required touching dozens of call sites.
+To concretize this, we have something like this (types have been altered for their safety):">
+    <meta name="generator" content="Hugo 0.102.3" />
+    
+    
+    
+    
+      <meta name="robots" content="noindex, nofollow">
+    
+
+    
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
+
+
+
+    
+    
+    
+      
+
+    
+
+    
+    
+    <meta property="og:title" content="Logging with Expressions" />
+<meta property="og:description" content="Problem We recently had a problem at work where a piece of code was throwing an exception with the message &ldquo;System variable should be X but is Y&rdquo;. The problem was that we had no idea which value was incorrectly set, and we were so deep into highly reusable generic code that pushing the value name via method parameter would have required touching dozens of call sites.
+To concretize this, we have something like this (types have been altered for their safety):" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://gustavohidalgo.com/posts/2021-07-09-expression-logging/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-07-09T12:34:23-04:00" />
+<meta property="article:modified_time" content="2021-07-09T12:34:23-04:00" />
+
+<meta itemprop="name" content="Logging with Expressions">
+<meta itemprop="description" content="Problem We recently had a problem at work where a piece of code was throwing an exception with the message &ldquo;System variable should be X but is Y&rdquo;. The problem was that we had no idea which value was incorrectly set, and we were so deep into highly reusable generic code that pushing the value name via method parameter would have required touching dozens of call sites.
+To concretize this, we have something like this (types have been altered for their safety):"><meta itemprop="datePublished" content="2021-07-09T12:34:23-04:00" />
+<meta itemprop="dateModified" content="2021-07-09T12:34:23-04:00" />
+<meta itemprop="wordCount" content="1111">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Logging with Expressions"/>
+<meta name="twitter:description" content="Problem We recently had a problem at work where a piece of code was throwing an exception with the message &ldquo;System variable should be X but is Y&rdquo;. The problem was that we had no idea which value was incorrectly set, and we were so deep into highly reusable generic code that pushing the value name via method parameter would have required touching dozens of call sites.
+To concretize this, we have something like this (types have been altered for their safety):"/>
+
+	
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        Gustavo&#39;s blog
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+<div class="ananke-socials">
+  
+</div>
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked">
+          
+        POSTS
+      </aside>
+      
+
+
+
+
+
+
+
+
+
+
+  <div id="sharing" class="mt3 ananke-socials">
+    
+  </div>
+
+
+      <h1 class="f1 athelas mt3 mb1">Logging with Expressions</h1>
+      
+      
+      
+      <time class="f6 mv4 dib tracked" datetime="2021-07-09T12:34:23-04:00">July 9, 2021</time>
+      
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><h1 id="problem">Problem</h1>
+<p>We recently had a problem at work where a piece of code was throwing an exception with the message &ldquo;System variable should be X but is Y&rdquo;. The problem was that we had no idea <em>which</em> value was incorrectly set, and we were so deep into highly reusable generic code that pushing the value name via method parameter would have required touching dozens of call sites.</p>
+<p>To concretize this, we have something like this (types have been altered for their safety):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-csharp" data-lang="csharp"><span style="display:flex;"><span><span style="color:#75715e">// This class is auto-generated from an RPC specification.</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// It contains many get/set method pairs that wrap the underlying values the remote system exposes.</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// We wrote the code generation system such that the name of value being accesses is part of the method name, which also makes it easy to spot when someone makes a breaking change to the RPC contact because code stops compiling!</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RemoteSystemClient</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    Task SetValue1(<span style="color:#66d9ef">int</span> newValue) { ... }
+</span></span><span style="display:flex;"><span>    Task&lt;<span style="color:#66d9ef">int</span>&gt; GetValue1() { ... }
+</span></span><span style="display:flex;"><span>    Task SetValue2(<span style="color:#66d9ef">string</span> newValue) { ... }
+</span></span><span style="display:flex;"><span>    Task&lt;<span style="color:#66d9ef">string</span>&gt; GetValue2() { ... }
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// This remote system takes some time to change state when you call a setter, what we really wanted was to block until we could observe that the state really changed.</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RemoteSystemClientExtension</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">async</span> Task PollUntilExpectedAsync&lt;T&gt;(Func&lt;Task&lt;T&gt;&gt; getter, T expectedValue)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">where</span> T : IEquatable&lt;T&gt;
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> (
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int</span> i = <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>            (<span style="color:#66d9ef">await</span> getter.Invoke()).Equals(expectedValue) &amp;&amp; i &lt; <span style="color:#ae81ff">3</span>;)
+</span></span><span style="display:flex;"><span>        {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">await</span> Task.Delay(TimeSpan.FromSeconds(<span style="color:#ae81ff">1</span>));
+</span></span><span style="display:flex;"><span>            i++;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (!(<span style="color:#66d9ef">await</span> getter.Invoke()).Equals(expectedValue))
+</span></span><span style="display:flex;"><span>        {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// Here is the problem! I have no idea which value has an incorrect value.</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> ValueDidNotSetException(<span style="color:#e6db74">$&#34;Expected: {expectedValue}, Actual {await getter.Invoke()}&#34;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>When a <code>ValueDidNotSetException</code> is thrown, we could only hope that the stack trace contained enough information to know which code path we were on to deduce which configuration value was not being set in time.</p>
+<p>The quickest solution to this would be to add an argument to <code>PollUntilExpectedAsync</code> that identifies the value being set.</p>
+<p>Instead of:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-csharp" data-lang="csharp"><span style="display:flex;"><span>client.PollUntilExpectedAsync(<span style="color:#66d9ef">async</span> () =&gt; <span style="color:#66d9ef">await</span> client.GetValue1, expectedValue: <span style="color:#ae81ff">1</span>);
+</span></span></code></pre></div><p>We would write</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-csharp" data-lang="csharp"><span style="display:flex;"><span>client.PollUntilExpectedAsync(<span style="color:#66d9ef">async</span> () =&gt; <span style="color:#66d9ef">await</span> client.GetValue1(), expectedValue: <span style="color:#ae81ff">1</span>, name: <span style="color:#e6db74">&#34;Value1&#34;</span>);
+</span></span></code></pre></div><p>The problem with this approach is that we would have to change all call sites of <code>PollUntilExpectedAsync</code> and pass the correct configuration value name.
+We could have used a default parameter value to avoid having to modify so much code, but that would not actually address the problem: we still do not know what method we&rsquo;re calling and so we do not know which configuration value is not being set.
+We looked at this and thought &ldquo;You know, if only we could get the name of the method being called we could put that in the exception message and not have to change all the callers&rdquo;.
+That&rsquo;s exactly what C# Expression trees were made for!
+I spend the next day reading through the documentation and here&rsquo;s what I came up with.</p>
+<h1 id="solution">Solution</h1>
+<p>Here is our starting point:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-csharp" data-lang="csharp"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> client = <span style="color:#66d9ef">new</span> RemoteSystemClient();
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">await</span> RemoteSystemClientExtension.PollUntilExpectedAsync(() =&gt; client.GetValue1(), <span style="color:#ae81ff">2</span>);
+</span></span></code></pre></div><p>When run, this throws an exception like this:</p>
+<pre tabindex="0"><code>Unhandled exception. expressions.ValueDidNotSetException: Expected: 2, Actual 1
+   at expressions.RemoteSystemClientExtension.PollUntilExpectedAsync[T](Func`1 getter, T expectedValue) in /Users/gustavo/code/expressions/Program.cs:line 32
+   at expressions.Program.Main(String[] args) in /Users/gustavo/code/expressions/Program.cs:line 47
+   at expressions.Program.&lt;Main&gt;(String[] args)
+</code></pre><p>No mention whatsoever about Value1! Let&rsquo;s see how we can improve <code>PollUntilExpectedAsync</code>:</p>
+<ol>
+<li>Copy the original method and change the first argument from <code>Func&lt;Task&lt;T&gt;&gt;&gt;</code> to <code>Expression&lt;Func&lt;Task&lt;T&gt;&gt;&gt;</code>. I simply wrapped the original argument type (which must be a <a href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/delegates/">delegate</a> type ) in an <code>Expression</code>. This will be our new public method.</li>
+<li>I make the original method private and add one more argument called <code>accessorName</code>. This will be the name of the method that I want to include in the exception message.</li>
+<li>Then I write the C# expression code.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-csharp" data-lang="csharp"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">async</span> Task PollUntilExpectedAsyncImpl&lt;T&gt;(
+</span></span><span style="display:flex;"><span>    Func&lt;Task&lt;T&gt;&gt; getter,
+</span></span><span style="display:flex;"><span>    T expectedValue,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">string</span> accessorName)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> ValueDidNotSetException(<span style="color:#e6db74">$&#34;Expected: {expectedValue}, Actual {await getter.Invoke()}. Accessor: {accessorName}&#34;</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">async</span> Task PollUntilExpectedAsync&lt;T&gt;(Expression&lt;Func&lt;Task&lt;T&gt;&gt;&gt; getter, T expectedValue)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> method = getter.Body <span style="color:#66d9ef">as</span> MethodCallExpression;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> innerGetter = getter.Compile();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">await</span> PollUntilExpectedAsyncImpl(innerGetter, expectedValue, method.Method.Name);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>I don&rsquo;t have to change my original test code, and now I get this exception:</p>
+<pre tabindex="0"><code>Unhandled exception. expressions.ValueDidNotSetException: Expected: 2, Actual 1. ***Accessor: GetValue1***
+   at expressions.RemoteSystemClientExtension.PollUntilExpectedAsyncImpl[T](Func`1 getter, T expectedValue, String accessorName) in /Users/gustavo/code/expressions/Program.cs:line 34
+   at expressions.RemoteSystemClientExtension.PollUntilExpectedAsync[T](Expression`1 getter, T expectedValue) in /Users/gustavo/code/expressions/Program.cs:line 43
+   at expressions.Program.Main(String[] args) in /Users/gustavo/code/expressions/Program.cs:line 53
+   at expressions.Program.&lt;Main&gt;(String[] args)
+</code></pre><p>Notice how the name of the accessor method is included in the exception message, making it really easy to track down which configuration is not being set in time.</p>
+<h2 id="performance">Performance</h2>
+<p>You might spot that this <code>Expression</code> stuff is a lot like using reflection.
+Reflection is <em>slow</em> so before I check this in I should profile how much slower this is than the original solution.
+For this I will use <a href="https://benchmarkdotnet.org/">BenchmarkDotNet</a> to measure the difference.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-csharp" data-lang="csharp"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">BenchmarkExpressions</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">readonly</span> RemoteSystemClient client = <span style="color:#66d9ef">new</span> RemoteSystemClient();
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">    [Benchmark]</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> Expression() =&gt; RemoteSystemClientExtension.PollUntilExpectedAsync(() =&gt; client.GetValue1(), <span style="color:#ae81ff">1</span>).Wait();
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">    [Benchmark]</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> NoExpression() =&gt; RemoteSystemClientExtension.PollUntilExpectedAsyncImpl(client.GetValue1, <span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#34;GetValue1&#34;</span>).Wait();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Results:</p>
+<pre tabindex="0"><code>/ * Summary *
+
+BenchmarkDotNet=v0.13.0, OS=macOS Big Sur 11.4 (20F71) [Darwin 20.5.0]
+Intel Core i7-9750H CPU 2.60GHz, 1 CPU, 12 logical and 6 physical cores
+.NET SDK=5.0.101
+  [Host]     : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
+  DefaultJob : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
+
+
+|       Method |          Mean |      Error |     StdDev |
+|------------- |--------------:|-----------:|-----------:|
+|   Expression | 116,593.03 ns | 987.113 ns | 824.284 ns |
+| NoExpression |      51.01 ns |   0.370 ns |   0.328 ns |
+</code></pre><p>😬 Yikes! That is actually almost 2000x <em>slower</em>. Can we do better? The only potentially expensive operation in our code is the <code>Compile</code> call, what if we cached the compilation results?</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-csharp" data-lang="csharp"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> Dictionary&lt;<span style="color:#66d9ef">string</span>, Func&lt;Task&lt;<span style="color:#66d9ef">int</span>&gt;&gt;&gt; cache = <span style="color:#66d9ef">new</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">async</span> Task PollUntilExpectedAsyncCached(Expression&lt;Func&lt;Task&lt;<span style="color:#66d9ef">int</span>&gt;&gt;&gt; getter, <span style="color:#66d9ef">int</span> expectedValue)
+</span></span><span style="display:flex;"><span>        {
+</span></span><span style="display:flex;"><span>            Func&lt;Task&lt;<span style="color:#66d9ef">int</span>&gt;&gt; method = <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">string</span> name = (getter.Body <span style="color:#66d9ef">as</span> MethodCallExpression).Method.Name;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (cache.ContainsKey(name))
+</span></span><span style="display:flex;"><span>            {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// Console.WriteLine(&#34;Cache hit&#34;);</span>
+</span></span><span style="display:flex;"><span>                method = cache[name];
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>            {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// Console.WriteLine(&#34;Cache miss&#34;);</span>
+</span></span><span style="display:flex;"><span>                method = getter.Compile();
+</span></span><span style="display:flex;"><span>                cache[name] = method;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">await</span> PollUntilExpectedAsyncImpl(method, expectedValue, name);
+</span></span><span style="display:flex;"><span>        }
+</span></span></code></pre></div><p>Result:</p>
+<pre tabindex="0"><code>// * Summary *
+
+BenchmarkDotNet=v0.13.0, OS=macOS Big Sur 11.4 (20F71) [Darwin 20.5.0]
+Intel Core i7-9750H CPU 2.60GHz, 1 CPU, 12 logical and 6 physical cores
+.NET SDK=5.0.101
+  [Host]     : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
+  DefaultJob : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
+
+
+|           Method |          Mean |        Error |       StdDev |
+|----------------- |--------------:|-------------:|-------------:|
+|       Expression | 118,563.55 ns | 2,280.210 ns | 2,964.917 ns |
+| ExpressionCached |     556.61 ns |    11.099 ns |    15.192 ns |
+|     NoExpression |      50.79 ns |     0.878 ns |     0.685 ns |
+</code></pre><p>Nice! Only 10x slower! This is an acceptable performance difference in my book.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>Should you use expression trees to pass down logging state? Probably not, but if you ever need to remember to cache your <code>Compile</code> calls so that you don&rsquo;t pay a huge performance cost.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6 instapaper_ignoref">
+      
+      
+      </div>
+    </div>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://gustavohidalgo.com/" >
+    &copy;  Gustavo's blog 2022 
+  </a>
+    <div>
+<div class="ananke-socials">
+  
+</div>
+</div>
+  </div>
+</footer>
+
+  </body>
+</html>

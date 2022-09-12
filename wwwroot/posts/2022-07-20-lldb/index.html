@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>Hello LLDB | Gustavo&#39;s blog</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="description" content="Introduction I am reading through Crafting Interpreters by Robert Nystom and one of the first exercises asks you to write and debug a doubly-linked list in C. Regretfully I confess I never actually learned how to use GDB, ever, and on macOS I need to use the LLVM toolchain which means using LLDB instead of GDB. In this post I will write using LLDB to debug a simple C program.">
+    <meta name="generator" content="Hugo 0.102.3" />
+    
+    
+    
+    
+      <meta name="robots" content="noindex, nofollow">
+    
+
+    
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
+
+
+
+    
+    
+    
+      
+
+    
+
+    
+    
+    <meta property="og:title" content="Hello LLDB" />
+<meta property="og:description" content="Introduction I am reading through Crafting Interpreters by Robert Nystom and one of the first exercises asks you to write and debug a doubly-linked list in C. Regretfully I confess I never actually learned how to use GDB, ever, and on macOS I need to use the LLVM toolchain which means using LLDB instead of GDB. In this post I will write using LLDB to debug a simple C program." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://gustavohidalgo.com/posts/2022-07-20-lldb/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-07-20T12:34:23-04:00" />
+<meta property="article:modified_time" content="2022-07-20T12:34:23-04:00" />
+
+<meta itemprop="name" content="Hello LLDB">
+<meta itemprop="description" content="Introduction I am reading through Crafting Interpreters by Robert Nystom and one of the first exercises asks you to write and debug a doubly-linked list in C. Regretfully I confess I never actually learned how to use GDB, ever, and on macOS I need to use the LLVM toolchain which means using LLDB instead of GDB. In this post I will write using LLDB to debug a simple C program."><meta itemprop="datePublished" content="2022-07-20T12:34:23-04:00" />
+<meta itemprop="dateModified" content="2022-07-20T12:34:23-04:00" />
+<meta itemprop="wordCount" content="1698">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Hello LLDB"/>
+<meta name="twitter:description" content="Introduction I am reading through Crafting Interpreters by Robert Nystom and one of the first exercises asks you to write and debug a doubly-linked list in C. Regretfully I confess I never actually learned how to use GDB, ever, and on macOS I need to use the LLVM toolchain which means using LLDB instead of GDB. In this post I will write using LLDB to debug a simple C program."/>
+
+	
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        Gustavo&#39;s blog
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+<div class="ananke-socials">
+  
+</div>
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked">
+          
+        POSTS
+      </aside>
+      
+
+
+
+
+
+
+
+
+
+
+  <div id="sharing" class="mt3 ananke-socials">
+    
+  </div>
+
+
+      <h1 class="f1 athelas mt3 mb1">Hello LLDB</h1>
+      
+      
+      
+      <time class="f6 mv4 dib tracked" datetime="2022-07-20T12:34:23-04:00">July 20, 2022</time>
+      
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><h1 id="introduction">Introduction</h1>
+<p>I am reading through Crafting Interpreters by Robert Nystom and one of the first exercises asks you to write and debug a doubly-linked list in C.
+Regretfully I confess I never actually learned how to use GDB, ever, and on macOS I need to use the LLVM toolchain which means using LLDB instead of GDB.
+In this post I will write using LLDB to debug a simple C program.</p>
+<h1 id="reference-program">Reference program</h1>
+<p>Throughout this post, I will reference a simple implementation of a doubly-linked list in C.
+Here is the single-file C program I will be debugging:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdlib.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;string.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> LinkedListNode {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> LinkedListNode<span style="color:#f92672">*</span> next;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> LinkedListNode<span style="color:#f92672">*</span> prev;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> value;
+</span></span><span style="display:flex;"><span>} LinkedListNode;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>LinkedListNode<span style="color:#f92672">*</span> <span style="color:#a6e22e">initList</span>(<span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> value) {
+</span></span><span style="display:flex;"><span>    LinkedListNode<span style="color:#f92672">*</span> head <span style="color:#f92672">=</span> (LinkedListNode<span style="color:#f92672">*</span>)malloc(<span style="color:#66d9ef">sizeof</span>(LinkedListNode));
+</span></span><span style="display:flex;"><span>    head<span style="color:#f92672">-&gt;</span>value <span style="color:#f92672">=</span> value;
+</span></span><span style="display:flex;"><span>    head<span style="color:#f92672">-&gt;</span>next <span style="color:#f92672">=</span> NULL;
+</span></span><span style="display:flex;"><span>    head<span style="color:#f92672">-&gt;</span>prev <span style="color:#f92672">=</span> NULL;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> head;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">append</span>(LinkedListNode<span style="color:#f92672">*</span> list, <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> new) {
+</span></span><span style="display:flex;"><span>    LinkedListNode<span style="color:#f92672">*</span> current <span style="color:#f92672">=</span> list;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> size <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> (current<span style="color:#f92672">-&gt;</span>next <span style="color:#f92672">!=</span> NULL) {
+</span></span><span style="display:flex;"><span>        current <span style="color:#f92672">=</span> current<span style="color:#f92672">-&gt;</span>next;
+</span></span><span style="display:flex;"><span>        size<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    LinkedListNode<span style="color:#f92672">*</span> tail <span style="color:#f92672">=</span> initList(new);
+</span></span><span style="display:flex;"><span>    tail<span style="color:#f92672">-&gt;</span>prev <span style="color:#f92672">=</span> current;
+</span></span><span style="display:flex;"><span>    current<span style="color:#f92672">-&gt;</span>next <span style="color:#f92672">=</span> tail;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> size<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">printList</span>(LinkedListNode<span style="color:#f92672">*</span> list) {
+</span></span><span style="display:flex;"><span>    LinkedListNode<span style="color:#f92672">*</span> current <span style="color:#f92672">=</span> list;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span>(<span style="color:#66d9ef">int</span> index <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; current <span style="color:#f92672">!=</span> NULL; current <span style="color:#f92672">=</span> current<span style="color:#f92672">-&gt;</span>next, index<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>        printf(<span style="color:#e6db74">&#34;[%d]: %s</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, index, current<span style="color:#f92672">-&gt;</span>value);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>LinkedListNode<span style="color:#f92672">*</span> <span style="color:#a6e22e">find</span>(LinkedListNode<span style="color:#f92672">*</span> list, <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> value) {
+</span></span><span style="display:flex;"><span>    LinkedListNode<span style="color:#f92672">*</span> current <span style="color:#f92672">=</span> list;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> (current <span style="color:#f92672">!=</span> NULL <span style="color:#f92672">&amp;&amp;</span> strcmp(current<span style="color:#f92672">-&gt;</span>value, value) <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// printf(&#34;Comparing %s and %s\n&#34;, current-&gt;value, value);
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        current <span style="color:#f92672">=</span> current<span style="color:#f92672">-&gt;</span>next;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (current <span style="color:#f92672">!=</span> NULL) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> current;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> NULL;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>LinkedListNode<span style="color:#f92672">*</span> <span style="color:#a6e22e">delete</span>(LinkedListNode<span style="color:#f92672">*</span> list, <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> value) {
+</span></span><span style="display:flex;"><span>    LinkedListNode<span style="color:#f92672">*</span> toDelete <span style="color:#f92672">=</span> find(list, value);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (toDelete <span style="color:#f92672">!=</span> NULL) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (toDelete<span style="color:#f92672">-&gt;</span>prev <span style="color:#f92672">!=</span> NULL) {
+</span></span><span style="display:flex;"><span>            toDelete<span style="color:#f92672">-&gt;</span>prev<span style="color:#f92672">-&gt;</span>next <span style="color:#f92672">=</span> toDelete<span style="color:#f92672">-&gt;</span>next;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (toDelete<span style="color:#f92672">-&gt;</span>next <span style="color:#f92672">!=</span> NULL) {
+</span></span><span style="display:flex;"><span>            toDelete<span style="color:#f92672">-&gt;</span>next<span style="color:#f92672">-&gt;</span>prev <span style="color:#f92672">=</span> toDelete<span style="color:#f92672">-&gt;</span>prev;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    toDelete<span style="color:#f92672">-&gt;</span>prev <span style="color:#f92672">=</span> NULL;
+</span></span><span style="display:flex;"><span>    toDelete<span style="color:#f92672">-&gt;</span>next <span style="color:#f92672">=</span> NULL;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> toDelete;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> argv[]) {
+</span></span><span style="display:flex;"><span>    LinkedListNode<span style="color:#f92672">*</span> list <span style="color:#f92672">=</span> initList(<span style="color:#e6db74">&#34;A&#34;</span>);
+</span></span><span style="display:flex;"><span>    append(list, <span style="color:#e6db74">&#34;B&#34;</span>);
+</span></span><span style="display:flex;"><span>    append(list, <span style="color:#e6db74">&#34;C&#34;</span>);
+</span></span><span style="display:flex;"><span>    append(list, <span style="color:#e6db74">&#34;D&#34;</span>);
+</span></span><span style="display:flex;"><span>    printList(list);
+</span></span><span style="display:flex;"><span>    printf(<span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>    LinkedListNode<span style="color:#f92672">*</span> c <span style="color:#f92672">=</span> find(list, <span style="color:#e6db74">&#34;C&#34;</span>);
+</span></span><span style="display:flex;"><span>    printList(c);
+</span></span><span style="display:flex;"><span>    printf(<span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>    delete(list, <span style="color:#e6db74">&#34;B&#34;</span>);
+</span></span><span style="display:flex;"><span>    printList(list);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>And the Makefile that builds this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Makefile" data-lang="Makefile"><span style="display:flex;"><span><span style="color:#75715e"># Thanks to Job Vranish (https://spin.atomicobject.com/2016/08/26/makefile-c-projects/)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>TARGET_EXEC <span style="color:#f92672">:=</span> llist
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>BUILD_DIR <span style="color:#f92672">:=</span> ./build
+</span></span><span style="display:flex;"><span>SRC_DIRS <span style="color:#f92672">:=</span> ./src
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Find all the C and C++ files we want to compile
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"># Note the single quotes around the * expressions. Make will incorrectly expand these otherwise.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>SRCS <span style="color:#f92672">:=</span> <span style="color:#66d9ef">$(</span>shell find <span style="color:#66d9ef">$(</span>SRC_DIRS<span style="color:#66d9ef">)</span> -name <span style="color:#e6db74">&#39;*.cpp&#39;</span> -or -name <span style="color:#e6db74">&#39;*.c&#39;</span> -or -name <span style="color:#e6db74">&#39;*.s&#39;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># String substitution for every C/C++ file.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"># As an example, hello.cpp turns into ./build/hello.cpp.o
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>OBJS <span style="color:#f92672">:=</span> <span style="color:#66d9ef">$(</span>SRCS:%<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>BUILD_DIR<span style="color:#66d9ef">)</span>/%.o<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># String substitution (suffix version without %).
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"># As an example, ./build/hello.cpp.o turns into ./build/hello.cpp.d
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>DEPS <span style="color:#f92672">:=</span> <span style="color:#66d9ef">$(</span>OBJS:.o<span style="color:#f92672">=</span>.d<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Every folder in ./src will need to be passed to GCC so that it can find header files
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>INC_DIRS <span style="color:#f92672">:=</span> <span style="color:#66d9ef">$(</span>shell find <span style="color:#66d9ef">$(</span>SRC_DIRS<span style="color:#66d9ef">)</span> -type d<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>INC_FLAGS <span style="color:#f92672">:=</span> <span style="color:#66d9ef">$(</span>addprefix -I,<span style="color:#66d9ef">$(</span>INC_DIRS<span style="color:#66d9ef">))</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># The -MMD and -MP flags together generate Makefiles for us!
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"># These files will have .d instead of .o as the output.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>CPPFLAGS <span style="color:#f92672">:=</span> <span style="color:#66d9ef">$(</span>INC_FLAGS<span style="color:#66d9ef">)</span> -MMD -MP
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>CFLAGS <span style="color:#f92672">:=</span> -g
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># The final build step.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">$(BUILD_DIR)/$(TARGET_EXEC)</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">$(</span>OBJS<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">$(</span>CC<span style="color:#66d9ef">)</span> <span style="color:#66d9ef">$(</span>OBJS<span style="color:#66d9ef">)</span> -o $@ <span style="color:#66d9ef">$(</span>LDFLAGS<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Build step for C source
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">$(BUILD_DIR)/%.c.o</span><span style="color:#f92672">:</span> %.c
+</span></span><span style="display:flex;"><span>	mkdir -p <span style="color:#66d9ef">$(</span>dir $@<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">$(</span>CC<span style="color:#66d9ef">)</span> <span style="color:#66d9ef">$(</span>CPPFLAGS<span style="color:#66d9ef">)</span> <span style="color:#66d9ef">$(</span>CFLAGS<span style="color:#66d9ef">)</span> -c $&lt; -o $@
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Build step for C++ source
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">$(BUILD_DIR)/%.cpp.o</span><span style="color:#f92672">:</span> %.cpp
+</span></span><span style="display:flex;"><span>	mkdir -p <span style="color:#66d9ef">$(</span>dir $@<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">$(</span>CXX<span style="color:#66d9ef">)</span> <span style="color:#66d9ef">$(</span>CPPFLAGS<span style="color:#66d9ef">)</span> <span style="color:#66d9ef">$(</span>CXXFLAGS<span style="color:#66d9ef">)</span> -c $&lt; -o $@
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">.PHONY</span><span style="color:#f92672">:</span> clean
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">clean</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	rm -r <span style="color:#66d9ef">$(</span>BUILD_DIR<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Include the .d makefiles. The - at the front suppresses the errors of missing
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"># Makefiles. Initially, all the .d files will be missing, and we don&#39;t want those
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"># errors to show up.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#960050;background-color:#1e0010">-include</span> <span style="color:#66d9ef">$(</span>DEPS<span style="color:#66d9ef">)</span> 
+</span></span></code></pre></div><blockquote>
+<p>Your program must be compiled with debug symbols to fully work with LLDB
+For Apple&rsquo;s <code>cc</code> C compiler, debug symbols generation uses the <code>-g</code> flag passed to the compiler.</p>
+</blockquote>
+<h1 id="invoking-lldb">Invoking LLDB</h1>
+<p>Starting simple, LLDB can be invoked by passing it an executable file.
+Compilation of our sample code produces a <code>llist</code> executable, so to debug it you simply invoke <code>lldb llist</code>
+This launches the debugger and drops you in a REPL prompt, waiting for a command.</p>
+<p>The simplest thing to do is to run the program, which can be done by sending the <code>run</code> command:</p>
+<pre tabindex="0"><code>&gt; lldb llist
+(lldb) target create &#34;llist&#34;
+Current executable set to &#39;/Users/gustavo/code/craftinginterpreters/prelude/build/llist&#39; (x86_64).
+(lldb) run
+Process 7890 launched: &#39;/Users/gustavo/code/craftinginterpreters/prelude/build/llist&#39; (x86_64)
+[0]: A
+[1]: B
+[2]: C
+[3]: D
+
+[0]: C
+[1]: D
+
+[0]: A
+[1]: C
+[2]: D
+Process 7890 exited with status = 0 (0x00000000)
+</code></pre><p>Here we can see that the <code>printf</code> statements from the C program work, and the process exits with the expected 0 status code.
+You can run the program again with <code>run</code>, and for a full list of commands you can run <code>help</code> at the debugger REPL.</p>
+<p>Pretty neat!</p>
+<p>LLDB and GDB both support running commands identified by an unambiguous prefix match.
+This means that instead of typing <code>run&lt;Enter&gt;</code> you can just type <code>r&lt;Enter&gt;</code> (or <code>ru&lt;Enter&gt;</code>) because there is no other command that begins with <code>r</code>.
+While great for experienced debuggers, use of the terse commands for beginners just causes them to have to learn shortcuts at the same time as learning to use the debugger.
+In this post I will use the full command names, but just know that you can always use the shorter names.</p>
+<h1 id="setting-breakpoints">Setting breakpoints</h1>
+<p>Because we passed the <code>-g</code> flag to <code>cc</code> to generate debug symbols, LLDB has full knowledge of the source code of our executable.</p>
+<p>Let&rsquo;s set a breakpoint right at the start of <code>main</code> then run the code:</p>
+<pre tabindex="0"><code>&gt; lldb llist 
+(lldb) target create &#34;llist&#34;
+Current executable set to &#39;/Users/gustavo/code/craftinginterpreters/prelude/build/llist&#39; (x86_64).
+(lldb) breakpoint set --name main
+Breakpoint 1: where = llist`main + 15 at llist.c:67:28, address = 0x0000000100003ebf
+(lldb) run
+Process 2805 launched: &#39;/Users/gustavo/code/craftinginterpreters/prelude/build/llist&#39; (x86_64)
+Process 2805 stopped
+* thread #1, queue = &#39;com.apple.main-thread&#39;, stop reason = breakpoint 1.1
+    frame #0: 0x0000000100003ebf llist`main(argc=1, argv=0x00007ff7bfeff4b0) at llist.c:67:28
+   64   }
+   65  
+   66   int main(int argc, char* argv[]) {
+-&gt; 67       LinkedListNode* list = initList(&#34;A&#34;);
+   68       append(list, &#34;B&#34;);
+   69       append(list, &#34;C&#34;);
+   70       append(list, &#34;D&#34;);
+Target 0: (llist) stopped.
+(lldb) 
+</code></pre><p>Let&rsquo;s break that down:</p>
+<ol>
+<li>Invoke LLDB with <code>lldb llist</code></li>
+<li>Set a breakpoint at <code>main</code> with <code>breakpoint set --name main</code></li>
+<li>Run the program with <code>run</code></li>
+<li>Watch our breakpoint be hit at <code>llist.c</code> line 67 with a source code print out.</li>
+</ol>
+<p>Neat!
+A debugger should allow you to inspect the values of local variables, and you can do that with <code>var</code>.
+Within <code>main</code>, we should see local variables for the signature of <code>main</code> and the 2 <code>LinkedListNode*</code> declared inside:</p>
+<pre tabindex="0"><code>(lldb) var
+(int) argc = 1
+(char **) argv = 0x00007ff7bfeff4b0
+(LinkedListNode *) list = 0x000000010001a883
+(LinkedListNode *) c = 0x00007ff7bfeff370
+</code></pre><p>A debugger should allow you to step through your code line by line, and there are 2 commands to know:</p>
+<ol>
+<li><code>step</code>: Executes the next thing, stepping <em>into</em> calls.</li>
+<li><code>next</code>: Executes the next thing, stepping <em>over</em> calls.</li>
+</ol>
+<p>Our breakpoint at <code>main</code> stopped right at a call to <code>initList</code>.
+Let&rsquo;s step inside <code>initList</code> with <code>step</code>:</p>
+<pre tabindex="0"><code>(lldb) step
+Process 2805 stopped
+* thread #1, queue = &#39;com.apple.main-thread&#39;, stop reason = step in
+    frame #0: 0x0000000100003c5c llist`initList(value=&#34;A&#34;) at llist.c:12:45
+   9    } LinkedListNode;
+   10  
+   11   LinkedListNode* initList(char* value) {
+-&gt; 12       LinkedListNode* head = (LinkedListNode*)malloc(sizeof(LinkedListNode));
+   13       head-&gt;value = value;
+   14       head-&gt;next = NULL;
+   15       head-&gt;prev = NULL;
+Target 0: (llist) stopped.
+</code></pre><p>Now we&rsquo;re inside of <code>initList</code> and we could set more breakpoints or inspect locals.</p>
+<p>One final basic command, <code>finish</code>.
+<code>finish</code> allows the current stack frame to run to completion, and then breaks when program execution returns to the caller frame.
+This is a good command to run whenever you want to just finish the current function call and return to debugging your caller.</p>
+<p>If we call <code>finish</code> while we&rsquo;re debugging <code>initList</code>, we&rsquo;ll go back to debugging <code>main</code>:</p>
+<pre tabindex="0"><code>(lldb) finish
+Process 2805 stopped
+* thread #1, queue = &#39;com.apple.main-thread&#39;, stop reason = step out
+Return value: (LinkedListNode *) $0 = 0x00000001003044a0
+
+    frame #0: 0x0000000100003ecb llist`main(argc=1, argv=0x00007ff7bfeff4b0) at llist.c:67:21
+   64   }
+   65  
+   66   int main(int argc, char* argv[]) {
+-&gt; 67       LinkedListNode* list = initList(&#34;A&#34;);
+   68       append(list, &#34;B&#34;);
+   69       append(list, &#34;C&#34;);
+   70       append(list, &#34;D&#34;);
+Target 0: (llist) stopped.
+</code></pre><p>Finally, you can always terminate the debugging session with <code>exit</code>.</p>
+<h1 id="programmatically-setting-breakpoints">Programmatically setting breakpoints.</h1>
+<p>Think about the experience of using an IDE: you set breakpoints on lines and the breakpoints <em>move</em> as you edit code to approximately stay with the line you originally set the breakpoint on.
+You can add several breakpoints, run the program, and the breakpoints <em>persist</em> across runs.
+In a CLI debugger, you can achieve the same thing by writing a file with commands that gets run when lldb runs a program.
+For example, let&rsquo;s say you knew you wanted to debug <code>printList</code>, and you wanted to spare having to write <code>breakpoint set --name printList</code> and <code>run</code> every time you invoked <code>lldb</code>.
+First, write a file containing the commands you want to run, one command per line:</p>
+<pre tabindex="0"><code>breakpoint set --name printList
+run
+</code></pre><p>Then invoke <code>lldb</code> with the <code>--source</code> (short <code>-s</code>) command:</p>
+<pre tabindex="0"><code>&gt; lldb llist -s ../debug
+(lldb) target create &#34;llist&#34;
+Current executable set to &#39;/Users/gustavo/code/craftinginterpreters/prelude/build/llist&#39; (x86_64).
+(lldb) command source -s 0 &#39;../debug&#39;
+Executing commands in &#39;/Users/gustavo/code/craftinginterpreters/prelude/debug&#39;.
+(lldb) breakpoint set --name printList
+Breakpoint 1: where = llist`printList + 12 at llist.c:33:31, address = 0x0000000100003d2c
+(lldb) run
+Process 3648 stopped
+* thread #1, queue = &#39;com.apple.main-thread&#39;, stop reason = breakpoint 1.1
+    frame #0: 0x0000000100003d2c llist`printList(list=0x00000001003041c0) at llist.c:33:31
+   30   }
+   31  
+   32   void printList(LinkedListNode* list) {
+-&gt; 33       LinkedListNode* current = list;
+   34       for(int index = 0; current != NULL; current = current-&gt;next, index++) {
+   35           printf(&#34;[%d]: %s\n&#34;, index, current-&gt;value);
+   36       }
+Target 0: (llist) stopped.
+Process 3648 launched: &#39;/Users/gustavo/code/craftinginterpreters/prelude/build/llist&#39; (x86_64)
+</code></pre><p>This debugger command file therefore allows us to configure the debugger on launch with an arbitrarily complex command list, which means you can script the process of getting your program into the error condition you need to debug 😈.</p>
+<blockquote>
+<p>Don&rsquo;t confuse <code>-s|--source</code> with <code>-S|--source-before-file</code>! The latter runs the commands <em>before</em> your target executable is loaded, which means your debugger commands will fail!</p>
+</blockquote>
+<h1 id="conclusion">Conclusion</h1>
+<p>This post wraps a simple introduction to <code>lldb</code>, the LLVM equivalent to GCC&rsquo;s <code>gdb</code>.
+We saw how to compile, run, and debug a simple C program with <code>lldb</code>.
+Then we saw how to script <code>lldb</code> to automatically set breakpoints.
+I am happy with <code>lldb</code>&rsquo;s documentation and its UX, I will use it to debug my C programs.</p>
+<!-- raw HTML omitted -->
+<!-- raw HTML omitted -->
+<h1 id="references">References</h1>
+<p><a href="https://lldb.llvm.org/index.html">https://lldb.llvm.org/index.html</a></p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6 instapaper_ignoref">
+      
+      
+      </div>
+    </div>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://gustavohidalgo.com/" >
+    &copy;  Gustavo's blog 2022 
+  </a>
+    <div>
+<div class="ananke-socials">
+  
+</div>
+</div>
+  </div>
+</footer>
+
+  </body>
+</html>

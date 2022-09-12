@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>Linux Disk Reference | Gustavo&#39;s blog</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="description" content="Running out of disk space on a system can be much more disruptive than running out of memory or being under high load. Recently at work we experienced a brief outage due to a machine (not a VM!) whose disk filled up with log files, which caused the application writing to disk to crash, which made the machine useless, which led to the outage. The mitigation was to release disk space, start the application, and configure it to limit its disk usage and to clean up logs.">
+    <meta name="generator" content="Hugo 0.102.3" />
+    
+    
+    
+    
+      <meta name="robots" content="noindex, nofollow">
+    
+
+    
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
+
+
+
+    
+    
+    
+      
+
+    
+
+    
+    
+    <meta property="og:title" content="Linux Disk Reference" />
+<meta property="og:description" content="Running out of disk space on a system can be much more disruptive than running out of memory or being under high load. Recently at work we experienced a brief outage due to a machine (not a VM!) whose disk filled up with log files, which caused the application writing to disk to crash, which made the machine useless, which led to the outage. The mitigation was to release disk space, start the application, and configure it to limit its disk usage and to clean up logs." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://gustavohidalgo.com/posts/2022-04-01-linux-disk/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-04-01T12:34:23-04:00" />
+<meta property="article:modified_time" content="2022-04-01T12:34:23-04:00" />
+
+<meta itemprop="name" content="Linux Disk Reference">
+<meta itemprop="description" content="Running out of disk space on a system can be much more disruptive than running out of memory or being under high load. Recently at work we experienced a brief outage due to a machine (not a VM!) whose disk filled up with log files, which caused the application writing to disk to crash, which made the machine useless, which led to the outage. The mitigation was to release disk space, start the application, and configure it to limit its disk usage and to clean up logs."><meta itemprop="datePublished" content="2022-04-01T12:34:23-04:00" />
+<meta itemprop="dateModified" content="2022-04-01T12:34:23-04:00" />
+<meta itemprop="wordCount" content="845">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Linux Disk Reference"/>
+<meta name="twitter:description" content="Running out of disk space on a system can be much more disruptive than running out of memory or being under high load. Recently at work we experienced a brief outage due to a machine (not a VM!) whose disk filled up with log files, which caused the application writing to disk to crash, which made the machine useless, which led to the outage. The mitigation was to release disk space, start the application, and configure it to limit its disk usage and to clean up logs."/>
+
+	
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        Gustavo&#39;s blog
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+<div class="ananke-socials">
+  
+</div>
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked">
+          
+        POSTS
+      </aside>
+      
+
+
+
+
+
+
+
+
+
+
+  <div id="sharing" class="mt3 ananke-socials">
+    
+  </div>
+
+
+      <h1 class="f1 athelas mt3 mb1">Linux Disk Reference</h1>
+      
+      
+      
+      <time class="f6 mv4 dib tracked" datetime="2022-04-01T12:34:23-04:00">April 1, 2022</time>
+      
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><p>Running out of disk space on a system can be much more disruptive than running out of memory or being under high load.
+Recently at work we experienced a brief outage due to a machine (not a VM!) whose disk filled up with log files, which caused the application writing to disk to crash, which made the machine useless, which led to the outage.
+The mitigation was to release disk space, start the application, and configure it to limit its disk usage and to clean up logs.
+The investigation that led to discovering the issue was a pleasant trip through the different file system and disk utilization tools, and this may prove useful to me or someone else in the future.</p>
+<h1 id="contents">Contents</h1>
+<ul>
+<li>TOC
+{:toc}</li>
+</ul>
+<h1 id="disk-vocabulary">Disk vocabulary</h1>
+<p>From the kernel&rsquo;s point of view, disks are just another kind of I/O device just like your keyboard, network interface, monitor, or USB drive virus vector.
+However since every system has a disk and has to interact with the disk to boot and to persist data, disks have evolved many different protocols, naming schemes, and tools unique to them.
+It&rsquo;s important to know a few terms commonly seen around disks:</p>
+<ol>
+<li><code>block device</code> : As opposed to <code>character devices</code>, block devices support reading and writing &ldquo;blocks&rdquo; of data instead of single bits, bytes, or characters. Another key differentiator between block and character devices is the presence of kernel buffering of I/O operations. Block device reads and writes may be served by buffers for performance, while the underlying device may be writen to asynchronously by the kernel. Disks are commonly implemented as block devices.</li>
+<li><code>udev</code>: The userspace system that manages device lifecycles for a system. <code>udev</code> does a lot, but you should know that <code>udev</code> manages disk <em>naming</em> among other things.</li>
+<li><code>SCSI</code>: The <a href="https://en.wikipedia.org/wiki/SCSI">small computer systems interface</a> is a protocol devices implement to allow kernel drivers to utilize the device. The SCSI protocol was designed for more use cases than disks, though its use in disks is quite common.</li>
+<li><code>SATA</code> : The <a href="https://en.wikipedia.org/wiki/Serial_ATA">serial AT attachment</a> is a physical interface physical disks commonly implement to connect to motherboards.</li>
+<li><code>PATA (IDE)</code> The <a href="https://en.wikipedia.org/wiki/Parallel_ATA">parallel AT attachment</a> or Integrated Drive Electronics is a physical interface physical disks commonly implement to connect to motherboards.</li>
+<li><code>virtual filesystem</code>: Unlike Windows, the Linux virtual filesystem does not include disk identifiers in fully qualified file paths. For example, <code>C:\Program\ Files\</code> is immediately identifiable to a human as a directory <em>on</em> the <code>C:\</code> disk. A file path like <code>/home/gustavo/code</code> on Linux does not contain enough information to identify a disk. The mapping between file paths and disks is maintained by the virtual filesystem of the kernel.</li>
+</ol>
+<h1 id="tools">Tools</h1>
+<h2 id="mount"><code>mount</code></h2>
+<p>Used to list filesystems and their mount points.</p>
+<h2 id="lsblk"><code>lsblk</code></h2>
+<p>Used to list block devices.
+On a normal system, this essentially lists all of the disks or disk-like devices (physical and virtual) on a system.
+You should use <code>lsblk</code> if you want to know how many &ldquo;disks&rdquo; are available on a machine.
+You will probably want to know filesystem information, so go ahead and append <code>[--fs|-f]</code> to <code>lsblk</code>.
+Example:</p>
+<pre tabindex="0"><code>gustavo@ubuntu:/$ lsblk -f
+NAME   FSTYPE   LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINT
+sda                                                                       
+├─sda1 vfat           F325-B43F                               511M     0% /boot/efi
+├─sda2                                                                    
+└─sda5 ext4           952d0477-324d-417e-b133-9e807cb7af8e    8.5G    50% /
+sr0                                                                       
+</code></pre><p>You can interpret this output to mean:</p>
+<ol>
+<li>There are two block devices, <code>sda</code> and <code>sr0</code>.</li>
+<li><code>sr0</code> is <a href="https://en.wikipedia.org/wiki/SCSI">SCSI</a> device 0.</li>
+<li><code>sda</code> is the first</li>
+<li></li>
+</ol>
+<h2 id="du"><code>du</code></h2>
+<p>Used to inspect disk usage of files.
+You should use <code>du</code> when you want to know which file or directory is consuming disk space.
+Example of running this from the root of the file system <code>/</code>.</p>
+<pre tabindex="0"><code>gustavo@ubuntu:/$ cd /
+gustavo@ubuntu:/$ sudo du -h -d 1
+[sudo] password for gustavo: 
+4.0K	./mnt
+4.6G	./snap
+8.0K	./media
+12M	./etc
+249M	./home
+153M	./boot
+0	./sys
+68K	./root
+du: cannot access &#39;./run/user/1000/gvfs&#39;: Permission denied
+1.9M	./run
+4.0K	./cdrom
+2.2G	./var
+0	./dev
+186M	./opt
+4.0K	./srv
+16K	./lost+found
+du: cannot access &#39;./proc/4238/task/4238/fd/4&#39;: No such file or directory
+du: cannot access &#39;./proc/4238/task/4238/fdinfo/4&#39;: No such file or directory
+du: cannot access &#39;./proc/4238/fd/3&#39;: No such file or directory
+du: cannot access &#39;./proc/4238/fdinfo/3&#39;: No such file or directory
+0	./proc
+116K	./tmp
+5.9G	./usr
+15G	.
+</code></pre><p><code>du</code> can be used to find which file or directory is consuming more space than expected.
+It&rsquo;s common that some applications do not rotate their log files in <code>/var/log</code> by default.
+Using <code>du</code>, you can quickly find which directory is consuming your disk.</p>
+<h2 id="df"><code>df</code></h2>
+<p>Used to inspect disk usage of file systems.
+You should use <code>df</code> when you want to know how full the entire disk is.
+It does not matter what directory you run <code>df</code> in, the output does not depend on the current directory.
+Example:</p>
+<pre tabindex="0"><code>gustavo@ubuntu:/$ df -h
+Filesystem      Size  Used Avail Use% Mounted on
+udev            1.9G     0  1.9G   0% /dev
+tmpfs           389M  1.9M  388M   1% /run
+/dev/sda5        20G  9.7G  8.5G  54% /
+tmpfs           1.9G     0  1.9G   0% /dev/shm
+tmpfs           5.0M  4.0K  5.0M   1% /run/lock
+tmpfs           1.9G     0  1.9G   0% /sys/fs/cgroup
+/dev/sda1       511M  4.0K  511M   1% /boot/efi
+tmpfs           389M   40K  389M   1% /run/user/1000
+</code></pre><h1 id="what-happens-when-i-plug-in-a-disk">What happens when I plug in a disk?</h1>
+<h1 id="references">References</h1>
+<p><a href="https://wiki.archlinux.org/title/Persistent_block_device_naming">https://wiki.archlinux.org/title/Persistent_block_device_naming</a>
+<a href="https://www.kernel.org/doc/html/latest/filesystems/vfs.html">https://www.kernel.org/doc/html/latest/filesystems/vfs.html</a></p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6 instapaper_ignoref">
+      
+      
+      </div>
+    </div>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://gustavohidalgo.com/" >
+    &copy;  Gustavo's blog 2022 
+  </a>
+    <div>
+<div class="ananke-socials">
+  
+</div>
+</div>
+  </div>
+</footer>
+
+  </body>
+</html>

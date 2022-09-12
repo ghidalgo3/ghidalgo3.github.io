@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>c# on Gustavo&#39;s blog</title>
+    <link>http://gustavohidalgo.com/categories/c#/</link>
+    <description>Recent content in c# on Gustavo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 11 Jul 2021 12:34:23 -0400</lastBuildDate><atom:link href="http://gustavohidalgo.com/categories/c#/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Swagger from C# code</title>
+      <link>http://gustavohidalgo.com/posts/2021-07-11-swagger-from-code/</link>
+      <pubDate>Sun, 11 Jul 2021 12:34:23 -0400</pubDate>
+      
+      <guid>http://gustavohidalgo.com/posts/2021-07-11-swagger-from-code/</guid>
+      <description>Problem At work we write a lot of ASP.NET REST controllers. Some of the controllers have their API documented in the Azure REST API specs in the form of a Swagger specification, and some are consumed internally by a system that requires us to expose a Swagger specification. This is our problem: say we want to write a controller for Widgets that supports CRUD operations. A developer has to:
+Write the C# code.</description>
+    </item>
+    
+    <item>
+      <title>Logging with Expressions</title>
+      <link>http://gustavohidalgo.com/posts/2021-07-09-expression-logging/</link>
+      <pubDate>Fri, 09 Jul 2021 12:34:23 -0400</pubDate>
+      
+      <guid>http://gustavohidalgo.com/posts/2021-07-09-expression-logging/</guid>
+      <description>Problem We recently had a problem at work where a piece of code was throwing an exception with the message &amp;ldquo;System variable should be X but is Y&amp;rdquo;. The problem was that we had no idea which value was incorrectly set, and we were so deep into highly reusable generic code that pushing the value name via method parameter would have required touching dozens of call sites.
+To concretize this, we have something like this (types have been altered for their safety):</description>
+    </item>
+    
+  </channel>
+</rss>

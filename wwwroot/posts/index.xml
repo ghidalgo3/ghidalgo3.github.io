@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Gustavo&#39;s blog</title>
+    <link>http://gustavohidalgo.com/posts/</link>
+    <description>Recent content in Posts on Gustavo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 20 Jul 2022 12:34:23 -0400</lastBuildDate><atom:link href="http://gustavohidalgo.com/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Hello LLDB</title>
+      <link>http://gustavohidalgo.com/posts/2022-07-20-lldb/</link>
+      <pubDate>Wed, 20 Jul 2022 12:34:23 -0400</pubDate>
+      
+      <guid>http://gustavohidalgo.com/posts/2022-07-20-lldb/</guid>
+      <description>Introduction I am reading through Crafting Interpreters by Robert Nystom and one of the first exercises asks you to write and debug a doubly-linked list in C. Regretfully I confess I never actually learned how to use GDB, ever, and on macOS I need to use the LLVM toolchain which means using LLDB instead of GDB. In this post I will write using LLDB to debug a simple C program.</description>
+    </item>
+    
+    <item>
+      <title>REPLs</title>
+      <link>http://gustavohidalgo.com/posts/2022-08-04-repls/</link>
+      <pubDate>Wed, 20 Jul 2022 12:34:23 -0400</pubDate>
+      
+      <guid>http://gustavohidalgo.com/posts/2022-08-04-repls/</guid>
+      <description>Introduction My latent ADHD is manifesting as an intolerance for the slowness of the .NET inner loop, specially when reality is more like:
+Write some C# (fun) Build (not fun, MSBuild is 🐢) Run (kinda fun, but in reality this means getting your program to the right state which is repetitive and loses novelty after the first run) Debug (Bash your head onto your keyboard until you understand what&amp;rsquo;s wrong) Enlightenment 🔥 Go to 1 To soothe myself, I will explore ways to improve it.</description>
+    </item>
+    
+    <item>
+      <title>Linux Disk Reference</title>
+      <link>http://gustavohidalgo.com/posts/2022-04-01-linux-disk/</link>
+      <pubDate>Fri, 01 Apr 2022 12:34:23 -0400</pubDate>
+      
+      <guid>http://gustavohidalgo.com/posts/2022-04-01-linux-disk/</guid>
+      <description>Running out of disk space on a system can be much more disruptive than running out of memory or being under high load. Recently at work we experienced a brief outage due to a machine (not a VM!) whose disk filled up with log files, which caused the application writing to disk to crash, which made the machine useless, which led to the outage. The mitigation was to release disk space, start the application, and configure it to limit its disk usage and to clean up logs.</description>
+    </item>
+    
+    <item>
+      <title>Linux Networking Reference</title>
+      <link>http://gustavohidalgo.com/posts/2022-03-01-linux-networking/</link>
+      <pubDate>Wed, 02 Mar 2022 12:34:23 -0400</pubDate>
+      
+      <guid>http://gustavohidalgo.com/posts/2022-03-01-linux-networking/</guid>
+      <description>Contents TOC {:toc} Introduction I have spent the last 2 years working on Azure products that relied heavily on different networking features of various Linux distributions. I found myself really struggling trying to understand how to connect the &amp;ldquo;what&amp;rdquo; and &amp;ldquo;why&amp;rdquo; book knowledge of compute networking with the &amp;ldquo;how&amp;rdquo; of the Linux networking stack. Initially I just blamed my ignorance of Linux tools, but soon my opinion changed from blame to empathy for me and for all other developers who, like me, have read a book or two but have not spent much time hands-on-keyboard trying to configure a network.</description>
+    </item>
+    
+    <item>
+      <title>Rust Day 2: Linked Lists</title>
+      <link>http://gustavohidalgo.com/posts/2021-08-11-rust-linked-list/</link>
+      <pubDate>Wed, 11 Aug 2021 12:34:23 -0400</pubDate>
+      
+      <guid>http://gustavohidalgo.com/posts/2021-08-11-rust-linked-list/</guid>
+      <description>Today I was inspired to continue learning Rust by implementing what every CS student eventually has to know backwards and forwards to get a job: a singly linked list. This shouldn&amp;rsquo;t be too hard, my list will support:
+Appending elements to the list one at a time Iterating over elements Determining the length of the list by iterating from head to tail Deallocating the list Using Rust modules (just to learn how they work) Every linked list needs a good recursive linked_list_node definition with a nice car and cdr erm I mean value and next:</description>
+    </item>
+    
+    <item>
+      <title>Fun with jq</title>
+      <link>http://gustavohidalgo.com/posts/2021-07-24-fun-with-jq/</link>
+      <pubDate>Sat, 24 Jul 2021 12:34:23 -0400</pubDate>
+      
+      <guid>http://gustavohidalgo.com/posts/2021-07-24-fun-with-jq/</guid>
+      <description>What is jq? jq is a wonderful tool for processing JSON in the command line. The prevalence of JSON in web APIs and data dumps makes jq a very imporant tool for interactively manipulating JSON. The tutorial is good enough to get you started with basic functionality, but I found that real usage quickly outgrew the scope of the tutorial. In this post I will show examples of using jq in slightly more complex scenarios than the tutorial.</description>
+    </item>
+    
+    <item>
+      <title>Swagger from C# code</title>
+      <link>http://gustavohidalgo.com/posts/2021-07-11-swagger-from-code/</link>
+      <pubDate>Sun, 11 Jul 2021 12:34:23 -0400</pubDate>
+      
+      <guid>http://gustavohidalgo.com/posts/2021-07-11-swagger-from-code/</guid>
+      <description>Problem At work we write a lot of ASP.NET REST controllers. Some of the controllers have their API documented in the Azure REST API specs in the form of a Swagger specification, and some are consumed internally by a system that requires us to expose a Swagger specification. This is our problem: say we want to write a controller for Widgets that supports CRUD operations. A developer has to:
+Write the C# code.</description>
+    </item>
+    
+    <item>
+      <title>Logging with Expressions</title>
+      <link>http://gustavohidalgo.com/posts/2021-07-09-expression-logging/</link>
+      <pubDate>Fri, 09 Jul 2021 12:34:23 -0400</pubDate>
+      
+      <guid>http://gustavohidalgo.com/posts/2021-07-09-expression-logging/</guid>
+      <description>Problem We recently had a problem at work where a piece of code was throwing an exception with the message &amp;ldquo;System variable should be X but is Y&amp;rdquo;. The problem was that we had no idea which value was incorrectly set, and we were so deep into highly reusable generic code that pushing the value name via method parameter would have required touching dozens of call sites.
+To concretize this, we have something like this (types have been altered for their safety):</description>
+    </item>
+    
+    <item>
+      <title>Rust Day 1</title>
+      <link>http://gustavohidalgo.com/posts/2021-06-27-rust-intro/</link>
+      <pubDate>Sun, 27 Jun 2021 12:34:23 -0400</pubDate>
+      
+      <guid>http://gustavohidalgo.com/posts/2021-06-27-rust-intro/</guid>
+      <description>I&amp;rsquo;m learning Rust to get my systems programing muscle back into shape after living in C# land for a few years. C# is a very nice language and the tooling ecosystem around it is wonderful, but all the serious systems programming is happening in C/C++ and now Rust. I will try to document my baby steps into Rust for myself and for anyone else that wants to learn Rust after having programmed in C# for a while.</description>
+    </item>
+    
+  </channel>
+</rss>
