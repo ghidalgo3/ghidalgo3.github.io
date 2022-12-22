@@ -1,7 +1,7 @@
 {
 	"version": 3,
 	"file": "main.css",
-	"sourceRoot": "/Users/gustavo/code/ghidalgo3.github.io/Blog",
+	"sourceRoot": "/Users/gustavo/code/ghidalgo3.github.io/static",
 	"sources": [
 		"stdin"
 	],

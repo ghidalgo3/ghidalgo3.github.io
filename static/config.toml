@@ -1,4 +1,4 @@
 baseURL = 'http://gustavohidalgo.com/'
 languageCode = 'en-us'
 title = "Gustavo's blog"
-theme = "ananke"
+theme = "ananke" 
