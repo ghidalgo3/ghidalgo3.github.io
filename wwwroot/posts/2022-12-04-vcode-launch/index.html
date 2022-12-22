@@ -6,7 +6,7 @@
     
     <title>Visual Studio Code launch configurations | Gustavo&#39;s blog</title>
     <meta name="viewport" content="width=device-width,minimum-scale=1">
-    <meta name="description" content="VSCode supports starting and debugging processes though its launch configuration system. Launch configurations control what happens when you press F5, and for simple scenarios there are several templates that get the job done. Multiple times now I&rsquo;ve found myself in situations where pressing F5 fails because the process being debugged depends on an external service like a database. It&rsquo;s trivial to start a database service, but the lost time and focus from such a failure usually derails my motivation.">
+    <meta name="description" content="VSCode supports starting and debugging processes through its launch configuration system. Launch configurations control what happens when you press F5, and for simple scenarios there are several templates that get the job done. Multiple times now I&rsquo;ve found myself in situations where pressing F5 fails because the process being debugged depends on an external service like a database or an application in a container. It&rsquo;s trivial to start a database service, but the lost time and focus from such a failure usually derails my motivation.">
     <meta name="generator" content="Hugo 0.102.3" />
     
     
@@ -30,19 +30,19 @@
     
     
     <meta property="og:title" content="Visual Studio Code launch configurations" />
-<meta property="og:description" content="VSCode supports starting and debugging processes though its launch configuration system. Launch configurations control what happens when you press F5, and for simple scenarios there are several templates that get the job done. Multiple times now I&rsquo;ve found myself in situations where pressing F5 fails because the process being debugged depends on an external service like a database. It&rsquo;s trivial to start a database service, but the lost time and focus from such a failure usually derails my motivation." />
+<meta property="og:description" content="VSCode supports starting and debugging processes through its launch configuration system. Launch configurations control what happens when you press F5, and for simple scenarios there are several templates that get the job done. Multiple times now I&rsquo;ve found myself in situations where pressing F5 fails because the process being debugged depends on an external service like a database or an application in a container. It&rsquo;s trivial to start a database service, but the lost time and focus from such a failure usually derails my motivation." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="http://gustavohidalgo.com/posts/2022-12-04-vcode-launch/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2022-12-04T12:34:23-04:00" />
 <meta property="article:modified_time" content="2022-12-04T12:34:23-04:00" />
 
 <meta itemprop="name" content="Visual Studio Code launch configurations">
-<meta itemprop="description" content="VSCode supports starting and debugging processes though its launch configuration system. Launch configurations control what happens when you press F5, and for simple scenarios there are several templates that get the job done. Multiple times now I&rsquo;ve found myself in situations where pressing F5 fails because the process being debugged depends on an external service like a database. It&rsquo;s trivial to start a database service, but the lost time and focus from such a failure usually derails my motivation."><meta itemprop="datePublished" content="2022-12-04T12:34:23-04:00" />
+<meta itemprop="description" content="VSCode supports starting and debugging processes through its launch configuration system. Launch configurations control what happens when you press F5, and for simple scenarios there are several templates that get the job done. Multiple times now I&rsquo;ve found myself in situations where pressing F5 fails because the process being debugged depends on an external service like a database or an application in a container. It&rsquo;s trivial to start a database service, but the lost time and focus from such a failure usually derails my motivation."><meta itemprop="datePublished" content="2022-12-04T12:34:23-04:00" />
 <meta itemprop="dateModified" content="2022-12-04T12:34:23-04:00" />
-<meta itemprop="wordCount" content="140">
+<meta itemprop="wordCount" content="172">
 <meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Visual Studio Code launch configurations"/>
-<meta name="twitter:description" content="VSCode supports starting and debugging processes though its launch configuration system. Launch configurations control what happens when you press F5, and for simple scenarios there are several templates that get the job done. Multiple times now I&rsquo;ve found myself in situations where pressing F5 fails because the process being debugged depends on an external service like a database. It&rsquo;s trivial to start a database service, but the lost time and focus from such a failure usually derails my motivation."/>
+<meta name="twitter:description" content="VSCode supports starting and debugging processes through its launch configuration system. Launch configurations control what happens when you press F5, and for simple scenarios there are several templates that get the job done. Multiple times now I&rsquo;ve found myself in situations where pressing F5 fails because the process being debugged depends on an external service like a database or an application in a container. It&rsquo;s trivial to start a database service, but the lost time and focus from such a failure usually derails my motivation."/>
 
 	
   </head>
@@ -115,13 +115,33 @@
       
       
     </header>
-    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><p>VSCode supports starting and debugging processes though its launch configuration system.
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><p>VSCode supports starting and debugging processes through its launch configuration system.
 Launch configurations control what happens when you press F5, and for simple scenarios there are several templates that get the job done.
-Multiple times now I&rsquo;ve found myself in situations where pressing F5 fails because the process being debugged depends on an external service like a database.
+Multiple times now I&rsquo;ve found myself in situations where pressing F5 fails because the process being debugged depends on an external service like a database or an application in a container.
 It&rsquo;s trivial to start a database service, but the lost time and focus from such a failure usually derails my motivation.
-VSCode launch configurations can support starting all of our process dependencies, here I will describe how to do it.</p>
-<h2 id="tasks">Tasks</h2>
-<p>Database start scripts fall into two categories: those that terminate and those that don&rsquo;t.
+VSCode launch configurations can support starting all of our process dependencies, here I will describe how to do it in a few different scenarios.</p>
+
+<script async type="application/javascript" src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js">
+    var config = {
+        startOnLoad: true,
+        theme: 'dark',
+        align: 'center'
+    };
+    mermaid.initialize(config);
+</script>
+
+<div class="mermaid">
+    
+graph TD;
+  A-->B;
+  A-->C;
+  B-->D;
+  C-->D;
+
+</div>
+<h1 id="starting-and-debugging-multiple-processes">Starting and debugging multiple processes.</h1>
+<p>In web applications, the database is usually a separate process from
+Database start scripts fall into two categories: those that terminate and those that don&rsquo;t.
 Examples of the ones that do:</p>
 <ol>
 <li><code>systemd</code> start service calls</li>
