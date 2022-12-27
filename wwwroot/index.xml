@@ -8,12 +8,12 @@
     <language>en-us</language>
     <lastBuildDate>Sun, 04 Dec 2022 12:34:23 -0400</lastBuildDate><atom:link href="http://gustavohidalgo.com/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Visual Studio Code launch configurations</title>
+      <title>Slightly complex VSCode launch configurations</title>
       <link>http://gustavohidalgo.com/posts/2022-12-04-vcode-launch/</link>
       <pubDate>Sun, 04 Dec 2022 12:34:23 -0400</pubDate>
       
       <guid>http://gustavohidalgo.com/posts/2022-12-04-vcode-launch/</guid>
-      <description>VSCode supports starting and debugging processes through its launch configuration system. Launch configurations control what happens when you press F5, and for simple scenarios there are several templates that get the job done. Multiple times now I&amp;rsquo;ve found myself in situations where pressing F5 fails because the process being debugged depends on an external service like a database or an application in a container. It&amp;rsquo;s trivial to start a database service, but the lost time and focus from such a failure usually derails my motivation.</description>
+      <description>VSCode supports starting and debugging processes through its launch configuration system, largely configured with the tasks.json and launch.json editor configuration files. Launch configurations control what happens, and in what order, when you press F5 and the green play button in the debug pane. As a project grows in scope and in team members, I have learned that it is easier to tell other developers &amp;ldquo;just press F5 and everything will just work&amp;rdquo; rather than asking them to read README files.</description>
     </item>
     
     <item>
