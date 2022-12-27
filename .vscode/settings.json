@@ -1,5 +1,6 @@
 {
     "appService.preDeployTask": "publish-release",
     "appService.deploySubpath": "bin/Release/net6.0/publish",
-    "appService.defaultWebAppToDeploy": "/subscriptions/2dd602fa-2284-433e-9ecd-19ce72349a01/microsoft.web/sites/subscriptions/2dd602fa-2284-433e-9ecd-19ce72349a01/resourceGroups/blog/providers/Microsoft.Web/sites/gustavohidalgo"
+    "appService.defaultWebAppToDeploy": "/subscriptions/2dd602fa-2284-433e-9ecd-19ce72349a01/microsoft.web/sites/subscriptions/2dd602fa-2284-433e-9ecd-19ce72349a01/resourceGroups/blog/providers/Microsoft.Web/sites/gustavohidalgo",
+    "FSharp.suggestGitignore": false
 }
