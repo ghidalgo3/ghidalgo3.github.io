@@ -3,6 +3,7 @@ layout: post
 title:  "Linux Disk Reference"
 date:   2022-04-01 12:34:23 -0400
 categories: tools
+draft: true
 ---
 
 Running out of disk space on a system can be much more disruptive than running out of memory or being under high load.

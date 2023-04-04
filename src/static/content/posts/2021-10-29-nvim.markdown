@@ -3,6 +3,7 @@ layout: post
 title:  "Fun with NeoVim 0.7"
 date:   2021-10-29 12:34:23 -0400
 categories: vim
+draft: true
 ---
 
 # Introduction

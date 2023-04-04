@@ -3,6 +3,7 @@ layout: post
 title:  "REPLs"
 date:   2022-07-20 12:34:23 -0400
 categories: tools
+draft: true
 ---
 # Introduction
 My latent ADHD is manifesting as an intolerance for the slowness of the .NET inner loop, specially when reality is more like:

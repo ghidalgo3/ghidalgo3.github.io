@@ -3,6 +3,7 @@ layout: post
 title:  "Slightly complex VSCode launch configurations"
 date:   2022-12-04 12:34:23 -0400
 categories: tools
+draft: true
 ---
 
 VSCode supports starting and *debugging* processes through its launch configuration system, largely configured with the `tasks.json` and `launch.json` editor configuration files.

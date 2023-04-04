@@ -3,6 +3,7 @@ layout: post
 title:  "Final thoughts on F#"
 date:   2021-10-19 12:34:23 -0400
 categories: f#
+draft: true
 ---
 
 # Introduction
