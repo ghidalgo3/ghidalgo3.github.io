@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "Blog build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/bin/Debug/net6.0/Blog.dll",
+            "program": "${workspaceFolder}/src/bin/Debug/net6.0/Blog.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
@@ -21,9 +21,6 @@
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
-            },
-            "sourceFileMap": {
-                "/Views": "${workspaceFolder}/Views"
             }
         },
         {

@@ -39,7 +39,7 @@
       "type": "process",
       "args": [
         "clean",
-        "${workspaceFolder}",
+        "${workspaceFolder}/src",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary"
       ],
@@ -51,7 +51,7 @@
       "type": "process",
       "args": [
         "publish",
-        "${workspaceFolder}",
+        "${workspaceFolder}/src",
         "--configuration",
         "Release",
         "/property:GenerateFullPaths=true",
@@ -66,7 +66,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/Blog.csproj",
+        "${workspaceFolder}/src/Blog.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary"
       ],
@@ -78,7 +78,7 @@
       "type": "process",
       "args": [
         "publish",
-        "${workspaceFolder}/Blog.csproj",
+        "${workspaceFolder}/src/Blog.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary"
       ],
@@ -92,7 +92,7 @@
         "watch",
         "run",
         "--project",
-        "${workspaceFolder}/Blog.csproj"
+        "${workspaceFolder}/src/Blog.csproj"
       ],
       "problemMatcher": "$msCompile"
     }

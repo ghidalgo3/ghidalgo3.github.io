@@ -121,7 +121,6 @@ Watching for config changes in /Users/gustavo/code/ghidalgo3.github.io/static/co
 This is an example of output with no errors.
 Then when I edit a file, I see this output:
 
-<!-- {{<fwedf>}} -->
 ```
 Change detected, rebuilding site.
 2022-12-22 13:12:29.779 -0500
