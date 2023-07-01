@@ -9,9 +9,9 @@
       "label": "Hugo watch",
       "command": "hugo",
       "type": "process",
-      "args": [ "-d", "../wwwroot", "-w" ],
+      "args": [ "-D", "-d", "${workspaceFolder}/src/wwwroot", "-w" ],
       "options": {
-        "cwd": "${workspaceFolder}/static"
+        "cwd": "${workspaceFolder}/src/static"
       },
       "isBackground": true,
       "problemMatcher": {

@@ -11,6 +11,7 @@
   <Target
     Name="BuildBlog"
     Inputs="@(BlogContent)"
+    Condition=" '$(Configuration)' == 'Release' "
     Outputs="wwwroot/index.html"
     AfterTargets="Compile">
     <Message Text="Building blog" Importance="High" />
