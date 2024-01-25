@@ -26,7 +26,7 @@ Many programs historically read "hidden" user configuration files from the `~` d
 For example, I have a `~/.vimrc` file that vim reads on startup to configure keybinds and plugins.
 Not all programs use the `~` + hidden file convention, and that has created some trouble in the past trying to synchronize so-called "dotfiles" across machines.
 
-The NeoVim developers thankfully adopted the Cross-Desktop Group (XDG) base directory specification for user configuation files, which means that NeoVim configuration files are search for in `~/.config/nvim` (technically nvim searches environment variable `XDG_CONFIG_HOME` but the spec says that if `XDG_CONFIG_HOME` is not set, applications should default to `~/.config`) on macOS and somewhere under `%APPDATA%` on Windows.
+The NeoVim developers thankfully adopted the Cross-Desktop Group (XDG) base directory specification for user configuation files, which means that NeoVim configuration files are searched for in `~/.config/nvim` (technically nvim searches environment variable `XDG_CONFIG_HOME` but the spec says that if `XDG_CONFIG_HOME` is not set, applications should default to `~/.config`) on macOS and somewhere under `%APPDATA%` on Windows.
 The quick and dirty solution if you want to just make `nvim` behave like `vim` is to create a symlink from `~/.config/nvim/init.vim` to `~/.vimrc`.
 The nvim migration guide asks that you create this file and fill it with commands to source the existing `.vimrc`, I don't have a strong opinion either way.
 I wanted to write an `init.vim` from scratch, so I chose not to do this.
@@ -101,7 +101,6 @@ The OmniSharp folks do recommend a few more plugins, so I will also install them
 I like to navigate back and forth between definition and usage, so putting my cursor on a type and entering `:OmniSharpGotoDefinition` works well enough. I can navigate forwards and backwards with `Ctrl-o` and 
 
 # Treesitter
-
 
 # Debugging
 
