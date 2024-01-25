@@ -18,7 +18,7 @@ Each word deserves a good definition:
 1. Project: The XML file that `msbuild` reads and builds. 
 1. Target: A named _step_ in a build. Targets only sequence build actions, they are not the actions themselves.
 1. Task: The "functions" that `msbuild` calls during the build. Tasks can be built-in to `msbuild`, code that is evaluated at build time, or calls to arbitrary process.
-1. Propertiy: Simple named values that influence the build. All properties are strings ultimately.
+1. Property: Simple named values that influence the build. All properties are strings ultimately.
 1. Item Groups: Named collections of items, often files but not necessarily.
 
 A good example is walking through what happens when you build a C# project. 

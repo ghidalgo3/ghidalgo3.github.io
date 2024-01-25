@@ -1,18 +1,12 @@
 ---
-layout: page
+layout: post
 title: About
 permalink: /about/
 ---
 
-This is the base Jekyll theme. You can find out more info about customizing your Jekyll theme, as well as basic Jekyll usage documentation at [jekyllrb.com](https://jekyllrb.com/)
+I am a curious person that gets paid to work on software.
 
-You can find the source code for Minima at GitHub:
-[jekyll][jekyll-organization] /
-[minima](https://github.com/jekyll/minima)
+In my career I have worked on cloud infrastructure, satellite communication, digital writing, and now geospatial data processing. 
+Currently I work at Microsoft.
 
-You can find the source code for Jekyll at GitHub:
-[jekyll][jekyll-organization] /
-[jekyll](https://github.com/jekyll/jekyll)
-
-
-[jekyll-organization]: https://github.com/jekyll
+In my spare time I maintain a [recipe management](https://letscooktime.com/) website with some neat features.
