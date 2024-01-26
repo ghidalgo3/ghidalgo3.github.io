@@ -1,0 +1,26 @@
+---
+layout: post
+title:  "New Job"
+date:   2024-01-26 12:34:23 -0400
+categories: life
+---
+
+It's been about 3 weeks since I started at Microsoft again, and I think it's important to share some internet memes about it.
+These memes do not necessariy represent any truth or lies about Microsoft and they are entirely my opinion and not necessarily Microsoft's.
+
+# Kubernetes memes
+[Someone beat me to the punch](https://medium.com/skale-5/19-memes-about-kubernetes-86d4ee87ba1b).
+
+# Python memes
+![Environments](https://imgs.xkcd.com/comics/python_environment.png)
+
+# Misc cosmic horrors
+Did you know Terraform for AWS has a boatload more effor put into it than Terraform for Azure?
+Don't just believe me, compare the [AWS provider](https://github.com/hashicorp/terraform-provider-aws) with the [Azure provider](https://github.com/hashicorp/terraform-provider-azurerm).
+
+![Title](https://miro.medium.com/v2/resize:fit:1154/format:webp/0*BWTwPe-hON4bPJ6c)
+
+I'm not saying ARM templates or Bicep files are "good" but at least I am literally just defining an easy to reason about DAG of idempotent REST calls.
+
+## References
+1. https://medium.com/driven-by-code/the-terrors-and-joys-of-terraform-88bbd1aa4359
