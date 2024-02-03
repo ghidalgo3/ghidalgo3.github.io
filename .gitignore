@@ -8,3 +8,4 @@ vendor
 obj/
 bin/
 wwwroot/
+.terraform/
