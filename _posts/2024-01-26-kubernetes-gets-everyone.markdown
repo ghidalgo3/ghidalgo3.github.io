@@ -56,7 +56,29 @@ The documentation puts it like this:
 
 Ok let's write this file:
 
-```
+```terraform
+resource "azurerm_kubernetes_cluster" "aks_cluster" {
+  name                = "${var.prefix}-aks-cluster"
+  location            = "eastus2"
+  resource_group_name = azurerm_resource_group.rg.name
+  dns_prefix          = "${var.prefix}aks"
+  network_profile {
+    network_plugin = "azure"
+    dns_service_ip = "192.168.255.254"
+    service_cidrs  = ["192.168.0.0/16"]
+  }
+
+  default_node_pool {
+    name           = "default"
+    node_count     = 1
+    vnet_subnet_id = data.azurerm_subnet.node_subnet.id
+    vm_size        = "Standard_DS2_v2"
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+}
 ```
 
 ## Errors
