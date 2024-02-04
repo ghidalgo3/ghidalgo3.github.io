@@ -8,7 +8,7 @@ show_excerpts: true # set to false to remove excerpts on the homepage
 author:
   name: Gustavo Hidalgo
   email: zambrano.hidalgo@gmail.com
-description: Bookmark this to keep an eye on my project updates!
+description: Doing the thing, doing it well.
 header_pages:
   - about.md
 minima:
