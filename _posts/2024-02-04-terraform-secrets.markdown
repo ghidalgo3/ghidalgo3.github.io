@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Terraform, please don't be dumb"
-date:   2024-04-02 08:34:23 -0400
+date:   2024-02-04 08:34:23 -0400
 categories: terraform, aks, tools
 ---
 [Cache invalidation](https://martinfowler.com/bliki/TwoHardThings.html) is one of the hardest things to solve in computer science.
