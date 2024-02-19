@@ -13,3 +13,4 @@ wwwroot/
 *.tfstate.backup
 *.tfstate.lock.info
 .venv/
+dist/
