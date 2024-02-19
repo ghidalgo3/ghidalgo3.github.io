@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "archetype"
+version = "0.0.1"
+authors = [
+  { name="Gustavo Hidalgo", email="zambrano.hidalgo@gmail.com" },
+]
+description = "A small example package"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+# This is the closest thing to a C# project's PackageDependencies item group.
+# pip-tools takes this list of dependencies and generates a requirements.txt file.
+# This is the only place where you should list your dependencies.
+# The rest of your code should use import statements to declare dependencies.
+dependencies = [
+  "fastapi>=0.109.2"
+]
+
+[project.urls]
+Homepage = "https://github.com/pypa/sampleproject"
+Issues = "https://github.com/pypa/sampleproject/issues"
+
