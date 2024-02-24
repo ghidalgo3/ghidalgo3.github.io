@@ -1,0 +1,4 @@
+.venv/
+dist/
+terraform/
+.DS_Store
