@@ -2,4 +2,13 @@
 set -euo pipefail
 
 python -m pip install pip-tools
+pip_compile_options="--generate-hashes --emit-index-url --annotate"
+
+# Generate 2 requirements file: for production and for development
+# The development one is a superset of the production one
+pip-compile pyproject.toml --strip-extras $pip_compile_options
+pip-compile --extra dev -o dev-requirements.txt pyproject.toml $pip_compile_options
+
+python -m pip install -r dev-requirements.txt
+python -m pip install -e .
 

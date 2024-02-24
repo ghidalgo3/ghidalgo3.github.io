@@ -1,0 +1,25 @@
+---
+layout: post
+title:  "Kubernetes Day 1"
+date:   2024-02-04 08:34:23 -0400
+categories: aks
+---
+
+Enough cribbing about tooling, let's run some containers!
+
+# Archetype
+At $DAYJOB I maintain a lot of Python code, so to make everything transferrable I'm going to create a Python package called `archetype` which is your archetypical Azure Python REST service.
+The only design constraint is that `archetype` must not do anything interesting! 
+WYSIWYG, so to speak.
+Its source code can be found [here](https://github.com/ghidalgo3/ghidalgo3.github.io/tree/main/k8s), and for my sanity I'll document a little of its structure here:
+
+1. `scripts` directory holds the project scripts according to the [scripts-to-rule-them-all](https://github.com/github/scripts-to-rule-them-all) pattern.
+1. `pyproject.toml` defines metadata for the project. This file is involved when packaging this into a wheel (a python package) and if I was publishing this on PyPI then this file would drive the metadata that others see about this package.
+
+
+
+
+# Reference
+1. [Python Project TOML](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#writing-pyproject-toml)
+1. [Python Packagin](https://packaging.python.org/en/latest/tutorials/packaging-projects/)
+1. [Relieving Python packaging pain](https://www.bitecode.dev/p/relieving-your-python-packaging-pain)

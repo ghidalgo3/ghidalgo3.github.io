@@ -22,7 +22,16 @@ classifiers = [
 # This is the only place where you should list your dependencies.
 # The rest of your code should use import statements to declare dependencies.
 dependencies = [
-  "fastapi>=0.109.2"
+  "fastapi>=0.109.2",
+  "uvicorn>=0.27.1"
+]
+
+# pip-compile understands this section as extras
+# https://github.com/jazzband/pip-tools?tab=readme-ov-file#requirements-from-pyprojecttoml
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "mypy",
 ]
 
 [project.urls]
