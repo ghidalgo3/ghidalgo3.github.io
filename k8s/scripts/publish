@@ -8,11 +8,11 @@ login_server=$(az acr show --name $acr_name --query loginServer --output tsv)
 
 repository="archetype"
 tag="latest" # git rev-parse --short HEAD
-image_full_name="$login_server/$repository:$tag"
+image_full_name="$login_server/$repository:$tag-amd64"
 echo "Building docker image as $image_full_name"
 
 echo "Building $image_full_name"
-docker build . -t $image_full_name
+docker build . --platform=linux/amd64 -t "$image_full_name"
 
 echo "Pushing $image_full_name to $acr_name"
 docker push $image_full_name

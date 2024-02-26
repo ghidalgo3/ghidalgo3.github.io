@@ -8,6 +8,14 @@ def environment_variable(name: str, default: str) -> str:
     return os.environ[name] if name in os.environ else default
 
 
+def magic_function(x: int, y: int) -> int:
+    sum = x + y
+    if sum == 42:
+        return 0
+    else:
+        return sum
+
+
 ARCHETYPE_NAME = "ARCHETYPE_NAME"
 configuration_value = environment_variable(ARCHETYPE_NAME, "NAMELESS!")
 app = FastAPI()

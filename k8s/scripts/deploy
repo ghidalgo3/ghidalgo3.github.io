@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+terraform apply 
+az aks get-credentials \
+    --resource-group $(terraform output -raw resource_group_name) \
+    --name $(terraform output -raw k8s_cluster_name)

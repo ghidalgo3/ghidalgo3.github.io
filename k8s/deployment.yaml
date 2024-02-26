@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: archetype-deployment
+  labels:
+    app: archetype
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: archetype
+  template:
+    metadata:
+      labels:
+        app: archetype
+    spec:
+      containers:
+      - name: archetype
+        image: gustavo2acr.azurecr.io/archetype:latest-amd64
+        ports:
+        - containerPort: 8000
